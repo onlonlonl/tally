@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tally">
+<title>Tally ✦</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23b8960c' rx='0'/%3E%3Cpolygon points='16,4 19,13 28,16 19,19 16,28 13,19 4,16 13,13' fill='%23f5f0e6'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23b8960c'/%3E%3Cpolygon points='90,24 105,75 156,90 105,105 90,156 75,105 24,90 75,75' fill='%23f5f0e6'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'DotGothic16',monospace;
+  background:#f5f0e6;color:#6d5843;
+  position:relative;
+}
+body::before{
+  content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+  background:radial-gradient(circle,#d4c9a8 1px,transparent 1px);
+  background-size:16px 16px;opacity:.3;pointer-events:none;z-index:0;
+}
+
+/* ---- Layout ---- */
+.app{height:100vh;display:flex;flex-direction:column;position:relative;z-index:1}
+.app-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.page{padding:24px 20px 20px;min-height:100%}
+
+/* ---- Tab Bar ---- */
+.tab-bar{
+  display:flex;border-top:2px solid #c9b88a;
+  background:#faf6ed;flex-shrink:0;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.tab-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:2px;padding:8px 0 6px;border:none;background:none;
+  font-family:inherit;cursor:pointer;color:#c9b88a;
+}
+.tab-item.active{color:#b8960c}
+.tab-icon{font-size:18px;line-height:1}
+.tab-label{font-size:8px;letter-spacing:1px}
+
+/* ---- Common ---- */
+.section-label{
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:#a89070;margin-bottom:12px;
+}
+.btn{
+  padding:8px 18px;border:2px solid #6d5843;
+  font-family:'DotGothic16',monospace;font-size:11px;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+}
+.btn-light{background:#faf6ed;color:#6d5843;box-shadow:2px 2px 0 #c9b88a}
+.btn-dark{background:#6d5843;color:#f5f0e6;box-shadow:3px 3px 0 #c9b88a}
+.btn-gold{background:#b8960c;color:#f5f0e6;box-shadow:3px 3px 0 #8a6f00;border-color:#8a6f00}
+.btn:disabled{opacity:.4;cursor:default}
+.loading,.empty{font-size:11px;color:#a89070;text-align:center;padding:40px 0}
+
+/* ---- Connect Page ---- */
+.connect-page{display:flex;align-items:center;justify-content:center}
+.connect-box{text-align:center;width:100%;max-width:300px}
+.star-icon{font-size:40px;color:#b8960c;margin-bottom:8px}
+.connect-box h1{font-size:28px;letter-spacing:8px;color:#b8960c;margin-bottom:4px}
+.connect-sub{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#a89070;margin-bottom:24px}
+.connect-box input{
+  width:100%;padding:10px 12px;border:2px solid #6d5843;
+  background:#faf6ed;font-family:inherit;font-size:12px;
+  color:#6d5843;outline:none;margin-bottom:16px;
+}
+.connect-box input::placeholder{color:#c9b88a}
+
+/* ---- Home / Dashboard ---- */
+.dash-page{padding-bottom:80px}
+.dash-header{text-align:center;margin-bottom:20px}
+.dash-star{font-size:32px;color:#b8960c;animation:glow-pulse 3s ease-in-out infinite}
+@keyframes glow-pulse{
+  0%,100%{opacity:.8;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.1)}
+}
+.dash-title{font-size:20px;letter-spacing:8px;color:#b8960c;margin:4px 0}
+.dash-coin-row{font-size:12px;color:#a89070}
+.dash-coin-num{font-size:24px;color:#b8960c}
+.dash-coin-label{color:#b8960c}
+
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.summary-card{
+  border:2px solid #c9b88a;background:#faf6ed;
+  padding:12px;box-shadow:2px 2px 0 #c9b88a;
+}
+.summary-card.wide{grid-column:1/-1}
+.summary-label{font-size:9px;letter-spacing:2px;color:#a89070;margin-bottom:4px}
+.summary-val{font-size:20px}
+.summary-val.income{color:#b8960c}
+.summary-val.expense{color:#6d5843}
+
+.comp-bars{margin-bottom:4px}
+.comp-row{display:flex;align-items:center;gap:8px;margin:6px 0}
+.comp-label{font-size:9px;letter-spacing:2px;color:#a89070;width:28px;text-align:right}
+.comp-track{flex:1;height:14px;border:2px solid #6d5843;background:#f5f0e6}
+.comp-fill{height:100%;transition:width .4s}
+.comp-fill.income{background:#b8960c}
+.comp-fill.expense{background:#6d5843}
+
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+.cal-wday{text-align:center;font-size:8px;color:#a89070;letter-spacing:1px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-cell{
+  aspect-ratio:1;border:1px solid #ddd5c4;
+  min-height:0;
+}
+.cal-cell.today{border:2px solid #b8960c}
+.cal-legend{
+  display:flex;align-items:center;justify-content:center;
+  gap:4px;margin-top:8px;font-size:8px;color:#a89070;
+}
+.legend-box{width:12px;height:12px;border:1px solid #c9b88a}
+
+.dash-log-btn{width:100%;margin-top:20px;padding:12px;font-size:12px}
+
+.period-row{
+  display:flex;align-items:center;gap:6px;margin-bottom:14px;
+  justify-content:center;
+}
+.date-pick{
+  font-family:'DotGothic16',monospace;font-size:11px;
+  padding:6px 8px;border:2px solid #6d5843;background:#faf6ed;
+  color:#6d5843;outline:none;width:130px;
+}
+.period-sep{font-size:11px;color:#a89070}
+
+.heat-nav{
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;margin-top:20px;margin-bottom:8px;
+}
+.heat-label{margin:0}
+.heat-arrow{
+  background:none;border:none;font-size:16px;color:#b8960c;
+  cursor:pointer;font-family:inherit;padding:4px 8px;
+}
+.heat-arrow.disabled{color:#c9b88a;cursor:default}
+
+/* ---- Log Page ---- */
+.type-toggle{display:flex;gap:0;margin-bottom:20px}
+.toggle-btn{
+  flex:1;padding:10px;border:2px solid #6d5843;
+  background:#faf6ed;font-family:inherit;font-size:11px;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+  color:#a89070;
+}
+.toggle-btn:first-child{border-right:1px solid #6d5843}
+.toggle-btn:last-child{border-left:1px solid #6d5843}
+.toggle-btn.active{background:#6d5843;color:#f5f0e6}
+.toggle-btn.income.active{background:#b8960c;color:#f5f0e6;border-color:#8a6f00}
+.amount-input{
+  width:100%;padding:16px;border:2px solid #6d5843;
+  background:#faf6ed;font-family:inherit;font-size:32px;
+  color:#6d5843;outline:none;text-align:center;margin-bottom:12px;
+}
+.amount-input::placeholder{color:#c9b88a}
+.note-input{
+  width:100%;padding:10px 12px;border:2px solid #6d5843;
+  background:#faf6ed;font-family:inherit;font-size:12px;
+  color:#6d5843;outline:none;margin-bottom:20px;
+}
+.note-input::placeholder{color:#c9b88a}
+.save-btn{width:100%;padding:12px;font-size:12px}
+.flash{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:48px;font-weight:bold;pointer-events:none;
+  animation:flash-in .4s ease-out;opacity:0;
+  animation-fill-mode:forwards;
+}
+.flash.expense{color:#6d5843}
+.flash.income{color:#b8960c}
+@keyframes flash-in{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(1.5)}
+  100%{opacity:0;transform:translate(-50%,-80%) scale(1)}
+}
+
+/* ---- Entries ---- */
+.date-group{margin-bottom:16px}
+.date-label{font-size:10px;letter-spacing:2px;color:#a89070;margin-bottom:6px}
+.entry-row{
+  display:flex;align-items:center;padding:10px 12px;
+  border:2px solid #c9b88a;background:#faf6ed;margin:6px 0;gap:10px;
+}
+.entry-dot{width:8px;height:8px;flex-shrink:0}
+.entry-dot.expense{background:#6d5843}
+.entry-dot.income{background:#b8960c}
+.entry-text{flex:1;font-size:11px}
+.entry-amount{font-size:12px;white-space:nowrap}
+.entry-amount.expense{color:#6d5843}
+.entry-amount.income{color:#b8960c}
+.entry-coin{font-size:10px;color:#b8960c;white-space:nowrap}
+.entry-action{
+  background:none;border:none;font-size:14px;color:#c9b88a;
+  cursor:pointer;padding:0 3px;font-family:inherit;flex-shrink:0;
+}
+.entry-action:hover,.entry-action:active{color:#6d5843}
+.entry-action.del:hover,.entry-action.del:active{color:#b05040}
+.entry-wrap{margin:6px 0}
+.entry-wrap .entry-row{margin:0}
+.entry-reason{
+  font-size:10px;color:#a89070;
+  padding:4px 12px 8px;
+  border:2px solid #c9b88a;border-top:none;
+  background:#faf6ed;
+}
+.search-input{
+  width:100%;padding:8px 10px;border:2px solid #6d5843;
+  background:#faf6ed;font-family:inherit;font-size:12px;
+  color:#6d5843;outline:none;margin-bottom:16px;
+}
+.search-input::placeholder{color:#c9b88a}
+.entry-edit{
+  border:2px solid #b8960c;background:#faf6ed;
+  padding:10px;margin:6px 0;box-shadow:2px 2px 0 #c9b88a;
+  display:flex;flex-direction:column;gap:6px;
+}
+.edit-type-row{display:flex;gap:0}
+.toggle-btn.small{padding:5px 12px;font-size:9px}
+.edit-input{
+  width:100%;padding:6px 8px;border:2px solid #6d5843;
+  background:#faf6ed;font-family:inherit;font-size:12px;
+  color:#6d5843;outline:none;
+}
+.edit-actions{display:flex;gap:8px}
+.edit-actions .btn{flex:1;padding:6px;font-size:10px}
+
+/* ---- Reviews ---- */
+.review-card{
+  border:2px solid #c9b88a;background:#faf6ed;
+  padding:14px;box-shadow:3px 3px 0 #c9b88a;margin:10px 0;
+}
+.review-header{display:flex;justify-content:space-between;margin-bottom:8px}
+.review-week{font-size:10px;letter-spacing:1px;color:#a89070}
+.review-coins{font-size:12px;color:#b8960c}
+.review-comment{font-size:12px;line-height:1.6}
+
+/* ---- Gacha ---- */
+.gacha-page{text-align:center}
+.gacha-page .section-label{text-align:left}
+.gacha-machine{display:inline-block;margin:8px 0 16px}
+.gacha-svg{filter:drop-shadow(3px 3px 0 #c9b88a)}
+.gacha-machine.shaking{animation:shake .15s infinite alternate}
+@keyframes shake{
+  0%{transform:translateX(-2px) rotate(-1deg)}
+  100%{transform:translateX(2px) rotate(1deg)}
+}
+.gacha-info{margin-bottom:16px}
+.gacha-cost{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a89070;margin-bottom:4px}
+.gacha-balance{font-size:11px;color:#b8960c;margin-bottom:12px}
+.gacha-result{
+  border:2px solid #b8960c;background:#faf6ed;
+  padding:16px;margin:16px 0;box-shadow:3px 3px 0 #c9b88a;
+}
+.result-star{font-size:24px;color:#b8960c;margin-bottom:4px}
+.result-type{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a89070;margin-bottom:6px}
+.result-content{font-size:12px;line-height:1.6}
+.reward-row{
+  display:flex;align-items:center;gap:8px;font-size:11px;
+}
+.reward-star{color:#b8960c}
+.reward-type{flex:1}
+.reward-date{color:#a89070;font-size:10px}
+.reward-wrap{cursor:pointer;margin:0 0 2px}
+.reward-wrap .reward-row{padding:8px 0;border-bottom:1px dashed #c9b88a}
+.reward-wrap.open .reward-row{border-bottom:none}
+.reward-content{
+  font-size:12px;line-height:1.6;
+  padding:8px 12px 12px;
+  border:2px solid #c9b88a;background:#faf6ed;
+  margin-bottom:8px;box-shadow:2px 2px 0 #c9b88a;
+}
+.gacha-pending{
+  font-size:11px;color:#a89070;text-align:center;
+  padding:12px;border:2px dashed #c9b88a;margin:12px 0;
+}
+
+/* ---- Wishes ---- */
+.wish-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.wish-header-row .section-label{margin-bottom:0}
+.add-btn{padding:4px 12px;font-size:10px}
+.wish-form{
+  border:2px dashed #c9b88a;padding:12px;margin-bottom:16px;
+  display:flex;flex-direction:column;gap:8px;
+}
+.wish-form input{
+  width:100%;padding:8px 10px;border:2px solid #6d5843;
+  background:#faf6ed;font-family:inherit;font-size:12px;
+  color:#6d5843;outline:none;
+}
+.wish-form input::placeholder{color:#c9b88a}
+.wish-item{
+  border:2px solid #c9b88a;background:#faf6ed;
+  padding:12px;box-shadow:3px 3px 0 #c9b88a;margin:10px 0;
+}
+.wish-item.reached{border-color:#b8960c}
+.wish-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.wish-title{font-size:11px;letter-spacing:1px}
+.wish-price{font-size:13px;color:#b8960c;margin-bottom:6px}
+.wish-badge{font-size:9px;color:#b8960c;letter-spacing:1px}
+.wish-total{
+  display:flex;justify-content:space-between;align-items:center;
+  border:2px solid #b8960c;background:#faf6ed;
+  padding:10px 14px;margin-bottom:14px;box-shadow:2px 2px 0 #c9b88a;
+}
+.wish-total-label{font-size:9px;letter-spacing:2px;color:#a89070}
+.wish-total-val{font-size:18px;color:#b8960c}
+.wish-bar-bg{width:100%;height:12px;border:2px solid #6d5843;background:#f5f0e6}
+.wish-bar-fill{height:100%;background:#b8960c;transition:width .3s}
+.wish-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:10px;color:#a89070}
+.fund-btn{
+  border:1px solid #b8960c;background:none;color:#b8960c;
+  font-family:inherit;font-size:9px;padding:2px 8px;cursor:pointer;
+  letter-spacing:1px;
+}
+.wish-lux{font-size:11px;color:#a89070;margin-top:8px;font-style:italic}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script>
+const {
+  useState,
+  useEffect,
+  useCallback,
+  useRef
+} = React;
+
+/* ---- API helper ---- */
+function getAPI() {
+  const h = window.location.hash.slice(1);
+  if (!h) return null;
+  try {
+    return decodeURIComponent(h);
+  } catch (e) {
+    return null;
+  }
+}
+async function api(path, opts = {}) {
+  const base = getAPI();
+  if (!base) throw new Error("Not connected");
+  const url = base + "/" + path;
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json"
+    },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+/* ---- Connect Page ---- */
+function ConnectPage({
+  onConnect
+}) {
+  const [url, setUrl] = useState("");
+  const handleSubmit = () => {
+    if (!url.trim()) return;
+    let clean = url.trim().replace(/\/$/, "");
+    if (!clean.includes("/functions/v1/tally-api")) {
+      clean += "/functions/v1/tally-api";
+    }
+    window.location.hash = encodeURIComponent(clean);
+    onConnect();
+  };
+  return React.createElement("div", {
+    className: "page connect-page"
+  }, React.createElement("div", {
+    className: "connect-box"
+  }, React.createElement("div", {
+    className: "star-icon"
+  }, "✦"), React.createElement("h1", null, "TALLY"), React.createElement("p", {
+    className: "connect-sub"
+  }, "Connect your Supabase"), React.createElement("input", {
+    type: "text",
+    placeholder: "https://xxx.supabase.co",
+    value: url,
+    onChange: e => setUrl(e.target.value),
+    onKeyDown: e => e.key === "Enter" && handleSubmit()
+  }), React.createElement("button", {
+    className: "btn btn-gold",
+    onClick: handleSubmit
+  }, "CONNECT")));
+}
+
+/* ---- Home Page (Dashboard) ---- */
+function HomePage({
+  balance,
+  entries,
+  onNav,
+  dashStart,
+  dashEnd,
+  setDashStart,
+  setDashEnd,
+  heatMonth,
+  heatYear,
+  setHeatMonth,
+  setHeatYear
+}) {
+  const now = new Date();
+  const startDate = dashStart;
+  const endDate = dashEnd;
+  const setStartDate = setDashStart;
+  const setEndDate = setDashEnd;
+
+  // Filter entries for custom period (summary + bars)
+  const periodEntries = (entries || []).filter(e => {
+    const d = e.created_at.slice(0, 10);
+    return d >= startDate && d <= endDate;
+  });
+  const totalIncome = periodEntries.filter(e => e.type === "income").reduce((s, e) => s + Number(e.amount), 0);
+  const totalExpense = periodEntries.filter(e => e.type === "expense").reduce((s, e) => s + Number(e.amount), 0);
+  const netBalance = totalIncome - totalExpense;
+  const barMax = Math.max(totalIncome, totalExpense, 1);
+  const incomePct = Math.round(totalIncome / barMax * 100);
+  const expensePct = Math.round(totalExpense / barMax * 100);
+
+  // Heatmap for selected month
+  const daysInMonth = new Date(heatYear, heatMonth + 1, 0).getDate();
+  const heatLabel = new Date(heatYear, heatMonth).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short"
+  });
+  const heatEntries = (entries || []).filter(e => {
+    const d = new Date(e.created_at);
+    return d.getFullYear() === heatYear && d.getMonth() === heatMonth;
+  });
+  const dailySpend = {};
+  let maxSpend = 0;
+  heatEntries.forEach(e => {
+    if (e.type === "expense") {
+      const day = new Date(e.created_at).getDate();
+      dailySpend[day] = (dailySpend[day] || 0) + Number(e.amount);
+      if (dailySpend[day] > maxSpend) maxSpend = dailySpend[day];
+    }
+  });
+  const firstDayOfWeek = new Date(heatYear, heatMonth, 1).getDay();
+  const calCells = [];
+  for (let i = 0; i < firstDayOfWeek; i++) calCells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) calCells.push(d);
+  const isCurrentMonth = heatYear === now.getFullYear() && heatMonth === now.getMonth();
+  function cellColor(day) {
+    if (!day) return "transparent";
+    const spent = dailySpend[day] || 0;
+    if (spent === 0) {
+      if (isCurrentMonth) return day <= now.getDate() ? "#e8e0d0" : "#f0ebe1";
+      return "#e8e0d0";
+    }
+    const intensity = Math.min(1, spent / (maxSpend || 1));
+    if (intensity < 0.33) return "#c9b88a";
+    if (intensity < 0.66) return "#b8960c";
+    return "#8a6f00";
+  }
+  function prevMonth() {
+    if (heatMonth === 0) {
+      setHeatMonth(11);
+      setHeatYear(heatYear - 1);
+    } else setHeatMonth(heatMonth - 1);
+  }
+  function nextMonth() {
+    if (isCurrentMonth) return;
+    if (heatMonth === 11) {
+      setHeatMonth(0);
+      setHeatYear(heatYear + 1);
+    } else setHeatMonth(heatMonth + 1);
+  }
+  return React.createElement("div", {
+    className: "page dash-page"
+  }, React.createElement("div", {
+    className: "dash-header"
+  }, React.createElement("div", {
+    className: "dash-star"
+  }, "✦"), React.createElement("div", {
+    className: "dash-title"
+  }, "TALLY"), React.createElement("div", {
+    className: "dash-coin-row"
+  }, React.createElement("span", {
+    className: "dash-coin-num"
+  }, balance), React.createElement("span", {
+    className: "dash-coin-label"
+  }, " ✦"))),
+  // Period selector
+  React.createElement("div", {
+    className: "period-row"
+  }, React.createElement("input", {
+    type: "date",
+    className: "date-pick",
+    value: startDate,
+    onChange: e => setStartDate(e.target.value)
+  }), React.createElement("span", {
+    className: "period-sep"
+  }, "~"), React.createElement("input", {
+    type: "date",
+    className: "date-pick",
+    value: endDate,
+    onChange: e => setEndDate(e.target.value)
+  })),
+  // Summary cards
+  React.createElement("div", {
+    className: "summary-grid"
+  }, React.createElement("div", {
+    className: "summary-card"
+  }, React.createElement("div", {
+    className: "summary-label"
+  }, "INCOME"), React.createElement("div", {
+    className: "summary-val income"
+  }, "+" + totalIncome.toLocaleString())), React.createElement("div", {
+    className: "summary-card"
+  }, React.createElement("div", {
+    className: "summary-label"
+  }, "EXPENSE"), React.createElement("div", {
+    className: "summary-val expense"
+  }, "-" + totalExpense.toLocaleString())), React.createElement("div", {
+    className: "summary-card wide"
+  }, React.createElement("div", {
+    className: "summary-label"
+  }, "NET"), React.createElement("div", {
+    className: "summary-val " + (netBalance >= 0 ? "income" : "expense")
+  }, (netBalance >= 0 ? "+" : "") + netBalance.toLocaleString()))),
+  // Comparison bars
+  React.createElement("div", {
+    className: "comp-bars"
+  }, React.createElement("div", {
+    className: "comp-row"
+  }, React.createElement("span", {
+    className: "comp-label"
+  }, "IN"), React.createElement("div", {
+    className: "comp-track"
+  }, React.createElement("div", {
+    className: "comp-fill income",
+    style: {
+      width: incomePct + "%"
+    }
+  }))), React.createElement("div", {
+    className: "comp-row"
+  }, React.createElement("span", {
+    className: "comp-label"
+  }, "OUT"), React.createElement("div", {
+    className: "comp-track"
+  }, React.createElement("div", {
+    className: "comp-fill expense",
+    style: {
+      width: expensePct + "%"
+    }
+  })))),
+  // Heatmap with month navigation
+  React.createElement("div", {
+    className: "heat-nav"
+  }, React.createElement("button", {
+    className: "heat-arrow",
+    onClick: prevMonth
+  }, "◂"), React.createElement("div", {
+    className: "section-label heat-label"
+  }, heatLabel.toUpperCase()), React.createElement("button", {
+    className: "heat-arrow" + (isCurrentMonth ? " disabled" : ""),
+    onClick: nextMonth
+  }, "▸")), React.createElement("div", {
+    className: "cal-weekdays"
+  }, ["S", "M", "T", "W", "T", "F", "S"].map((d, i) => React.createElement("span", {
+    key: i,
+    className: "cal-wday"
+  }, d))), React.createElement("div", {
+    className: "cal-grid"
+  }, calCells.map((day, i) => React.createElement("div", {
+    key: i,
+    className: "cal-cell" + (isCurrentMonth && day === now.getDate() ? " today" : ""),
+    style: {
+      background: cellColor(day)
+    },
+    title: day ? "Day " + day + ": ¥" + (dailySpend[day] || 0) : ""
+  }))), React.createElement("div", {
+    className: "cal-legend"
+  }, React.createElement("span", null, "Less"), React.createElement("div", {
+    className: "legend-box",
+    style: {
+      background: "#e8e0d0"
+    }
+  }), React.createElement("div", {
+    className: "legend-box",
+    style: {
+      background: "#c9b88a"
+    }
+  }), React.createElement("div", {
+    className: "legend-box",
+    style: {
+      background: "#b8960c"
+    }
+  }), React.createElement("div", {
+    className: "legend-box",
+    style: {
+      background: "#8a6f00"
+    }
+  }), React.createElement("span", null, "More")), React.createElement("button", {
+    className: "btn btn-gold dash-log-btn",
+    onClick: () => onNav("log")
+  }, "+ LOG ENTRY"));
+}
+
+/* ---- Log Page ---- */
+function LogPage({
+  onSaved
+}) {
+  const [type, setType] = useState("expense");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [flash, setFlash] = useState("");
+  const inputRef = useRef(null);
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus();
+  }, []);
+  const handleSave = async () => {
+    if (!amount || isNaN(parseFloat(amount))) return;
+    setSaving(true);
+    try {
+      await api("entries", {
+        method: "POST",
+        body: {
+          type,
+          amount: parseFloat(amount),
+          note
+        }
+      });
+      setFlash(type === "expense" ? "-" + amount : "+" + amount);
+      setAmount("");
+      setNote("");
+      setTimeout(() => setFlash(""), 1500);
+      if (onSaved) onSaved();
+    } catch (e) {
+      alert(e.message);
+    }
+    setSaving(false);
+  };
+  return React.createElement("div", {
+    className: "page log-page"
+  }, React.createElement("div", {
+    className: "section-label"
+  }, "NEW ENTRY"), React.createElement("div", {
+    className: "type-toggle"
+  }, React.createElement("button", {
+    className: "toggle-btn" + (type === "expense" ? " active" : ""),
+    onClick: () => setType("expense")
+  }, "EXPENSE"), React.createElement("button", {
+    className: "toggle-btn income" + (type === "income" ? " active" : ""),
+    onClick: () => setType("income")
+  }, "INCOME")), React.createElement("input", {
+    ref: inputRef,
+    className: "amount-input",
+    type: "number",
+    inputMode: "decimal",
+    placeholder: "0.00",
+    value: amount,
+    onChange: e => setAmount(e.target.value)
+  }), React.createElement("input", {
+    className: "note-input",
+    type: "text",
+    placeholder: "What was it for...",
+    value: note,
+    onChange: e => setNote(e.target.value),
+    onKeyDown: e => e.key === "Enter" && handleSave()
+  }), React.createElement("button", {
+    className: "btn btn-dark save-btn",
+    onClick: handleSave,
+    disabled: saving
+  }, saving ? "..." : "SAVE"), flash && React.createElement("div", {
+    className: "flash " + (flash.startsWith("+") ? "income" : "expense")
+  }, flash));
+}
+
+/* ---- Entries Page ---- */
+function EntriesPage({
+  entries,
+  loading,
+  onRefresh
+}) {
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState(null);
+  const [editType, setEditType] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const filtered = (entries || []).filter(e => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (e.note || "").toLowerCase().includes(q) || String(e.amount).includes(q);
+  });
+  const grouped = {};
+  filtered.forEach(e => {
+    const d = new Date(e.created_at).toLocaleDateString("en-CA");
+    if (!grouped[d]) grouped[d] = [];
+    grouped[d].push(e);
+  });
+  const dates = Object.keys(grouped).sort().reverse();
+  const startEdit = e => {
+    setEditing(e.id);
+    setEditType(e.type);
+    setEditAmount(String(e.amount));
+    setEditNote(e.note || "");
+  };
+  const cancelEdit = () => {
+    setEditing(null);
+  };
+  const saveEdit = async id => {
+    if (!editAmount || isNaN(parseFloat(editAmount))) return;
+    setBusy(true);
+    try {
+      await api("entries/" + id, {
+        method: "PATCH",
+        body: {
+          type: editType,
+          amount: parseFloat(editAmount),
+          note: editNote
+        }
+      });
+      setEditing(null);
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e.message);
+    }
+    setBusy(false);
+  };
+  const handleDelete = async id => {
+    if (!confirm("Delete this entry?")) return;
+    setBusy(true);
+    try {
+      await api("entries/" + id, {
+        method: "DELETE"
+      });
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e.message);
+    }
+    setBusy(false);
+  };
+  return React.createElement("div", {
+    className: "page entries-page"
+  }, React.createElement("div", {
+    className: "section-label"
+  }, "ENTRIES"), React.createElement("input", {
+    className: "search-input",
+    type: "text",
+    placeholder: "Search...",
+    value: search,
+    onChange: e => setSearch(e.target.value)
+  }), loading ? React.createElement("div", {
+    className: "loading"
+  }, "Loading...") : dates.length === 0 ? React.createElement("div", {
+    className: "empty"
+  }, search ? "No matches" : "No entries yet") : dates.map(d => React.createElement("div", {
+    key: d,
+    className: "date-group"
+  }, React.createElement("div", {
+    className: "date-label"
+  }, d), grouped[d].map(e => editing === e.id ? React.createElement("div", {
+    key: e.id,
+    className: "entry-edit"
+  }, React.createElement("div", {
+    className: "edit-type-row"
+  }, React.createElement("button", {
+    className: "toggle-btn small" + (editType === "expense" ? " active" : ""),
+    onClick: () => setEditType("expense")
+  }, "OUT"), React.createElement("button", {
+    className: "toggle-btn small income" + (editType === "income" ? " active" : ""),
+    onClick: () => setEditType("income")
+  }, "IN")), React.createElement("input", {
+    type: "number",
+    className: "edit-input",
+    value: editAmount,
+    onChange: ev => setEditAmount(ev.target.value)
+  }), React.createElement("input", {
+    type: "text",
+    className: "edit-input",
+    value: editNote,
+    onChange: ev => setEditNote(ev.target.value),
+    placeholder: "Note"
+  }), React.createElement("div", {
+    className: "edit-actions"
+  }, React.createElement("button", {
+    className: "btn btn-gold",
+    onClick: () => saveEdit(e.id),
+    disabled: busy
+  }, "SAVE"), React.createElement("button", {
+    className: "btn btn-light",
+    onClick: cancelEdit
+  }, "CANCEL"))) : React.createElement("div", {
+    key: e.id,
+    className: "entry-wrap"
+  }, React.createElement("div", {
+    className: "entry-row"
+  }, React.createElement("div", {
+    className: "entry-dot " + e.type
+  }), React.createElement("div", {
+    className: "entry-text"
+  }, e.note || (e.type === "income" ? "Income" : "Expense")), React.createElement("div", {
+    className: "entry-amount " + e.type
+  }, (e.type === "expense" ? "-" : "+") + "¥" + Number(e.amount).toLocaleString()), e.coins > 0 && React.createElement("div", {
+    className: "entry-coin"
+  }, "✦ " + e.coins), React.createElement("button", {
+    className: "entry-action",
+    onClick: () => startEdit(e)
+  }, "✎"), React.createElement("button", {
+    className: "entry-action del",
+    onClick: () => handleDelete(e.id)
+  }, "×")), e.coin_reason && React.createElement("div", {
+    className: "entry-reason"
+  }, "Lux: " + e.coin_reason))))));
+}
+
+/* ---- Review Page ---- */
+function ReviewPage({
+  reviews,
+  loading
+}) {
+  return React.createElement("div", {
+    className: "page review-page"
+  }, React.createElement("div", {
+    className: "section-label"
+  }, "WEEKLY REVIEWS"), loading ? React.createElement("div", {
+    className: "loading"
+  }, "Loading...") : !reviews || reviews.length === 0 ? React.createElement("div", {
+    className: "empty"
+  }, "Lux hasn't reviewed yet") : reviews.map(r => React.createElement("div", {
+    key: r.id,
+    className: "review-card"
+  }, React.createElement("div", {
+    className: "review-header"
+  }, React.createElement("span", {
+    className: "review-week"
+  }, r.week_start + " ~ " + r.week_end), React.createElement("span", {
+    className: "review-coins"
+  }, "✦ " + r.coins_earned)), React.createElement("div", {
+    className: "review-comment"
+  }, r.lux_comment || "..."))));
+}
+
+/* ---- Gacha Page ---- */
+function GachaPage({
+  balance,
+  rewards,
+  onPlay,
+  loading
+}) {
+  const [playing, setPlaying] = useState(false);
+  const [justGot, setJustGot] = useState(null);
+  const canPlay = balance >= 5;
+  const handlePlay = async () => {
+    if (!canPlay || playing) return;
+    setPlaying(true);
+    setJustGot(null);
+    try {
+      const reward = await api("rewards", {
+        method: "POST",
+        body: {
+          coins_spent: 5,
+          reward_type: "pending",
+          reward_content: "",
+          status: "pending"
+        }
+      });
+      // Animation delay
+      await new Promise(r => setTimeout(r, 1800));
+      setJustGot(reward);
+    } catch (e) {
+      alert(e.message);
+    }
+    setPlaying(false);
+    if (onPlay) onPlay();
+  };
+  const pendingCount = (rewards || []).filter(r => r.status === "pending").length;
+  const filledRewards = (rewards || []).filter(r => r.status === "filled");
+  const [expanded, setExpanded] = useState({});
+  return React.createElement("div", {
+    className: "page gacha-page"
+  }, React.createElement("div", {
+    className: "section-label"
+  }, "GACHA"), React.createElement("div", {
+    className: "gacha-machine" + (playing ? " shaking" : "")
+  }, React.createElement("svg", {
+    width: "140",
+    height: "196",
+    viewBox: "0 0 120 168",
+    className: "gacha-svg"
+  }, React.createElement("rect", {
+    x: "16",
+    y: "44",
+    width: "88",
+    height: "120",
+    fill: "#6d5843",
+    stroke: "#6d5843",
+    strokeWidth: "2"
+  }), React.createElement("rect", {
+    x: "16",
+    y: "4",
+    width: "88",
+    height: "48",
+    fill: "#8b7355",
+    stroke: "#6d5843",
+    strokeWidth: "2"
+  }), React.createElement("rect", {
+    x: "24",
+    y: "10",
+    width: "72",
+    height: "36",
+    fill: "rgba(250,246,237,0.2)",
+    stroke: "#8a6f00",
+    strokeWidth: "2"
+  }), React.createElement("rect", {
+    x: "30",
+    y: "14",
+    width: "14",
+    height: "14",
+    rx: "3",
+    fill: "#b8960c"
+  }), React.createElement("rect", {
+    x: "48",
+    y: "14",
+    width: "14",
+    height: "14",
+    rx: "3",
+    fill: "#c9b88a"
+  }), React.createElement("rect", {
+    x: "66",
+    y: "14",
+    width: "14",
+    height: "14",
+    rx: "3",
+    fill: "#b8960c"
+  }), React.createElement("rect", {
+    x: "30",
+    y: "30",
+    width: "14",
+    height: "14",
+    rx: "3",
+    fill: "#c9b88a"
+  }), React.createElement("rect", {
+    x: "48",
+    y: "30",
+    width: "14",
+    height: "14",
+    rx: "3",
+    fill: "#8a6f00"
+  }), React.createElement("rect", {
+    x: "66",
+    y: "30",
+    width: "14",
+    height: "14",
+    rx: "3",
+    fill: "#b8960c"
+  }), React.createElement("rect", {
+    x: "32",
+    y: "16",
+    width: "4",
+    height: "4",
+    rx: "1",
+    fill: "rgba(250,246,237,0.3)"
+  }), React.createElement("rect", {
+    x: "50",
+    y: "16",
+    width: "4",
+    height: "4",
+    rx: "1",
+    fill: "rgba(250,246,237,0.3)"
+  }), React.createElement("rect", {
+    x: "68",
+    y: "16",
+    width: "4",
+    height: "4",
+    rx: "1",
+    fill: "rgba(250,246,237,0.3)"
+  }), React.createElement("rect", {
+    x: "48",
+    y: "54",
+    width: "24",
+    height: "8",
+    fill: "#5c4a36"
+  }), React.createElement("rect", {
+    x: "52",
+    y: "62",
+    width: "16",
+    height: "6",
+    fill: "#5c4a36"
+  }), React.createElement("rect", {
+    x: "50",
+    y: "78",
+    width: "20",
+    height: "4",
+    fill: "#b8960c",
+    stroke: "#8a6f00",
+    strokeWidth: "1"
+  }), React.createElement("text", {
+    x: "60",
+    y: "100",
+    textAnchor: "middle",
+    fill: "#b8960c",
+    fontSize: "16",
+    fontFamily: "DotGothic16, monospace"
+  }, "✦"), React.createElement("rect", {
+    x: "82",
+    y: "88",
+    width: "18",
+    height: "6",
+    fill: "#b8960c",
+    stroke: "#8a6f00",
+    strokeWidth: "1.5"
+  }), React.createElement("rect", {
+    x: "96",
+    y: "82",
+    width: "14",
+    height: "18",
+    rx: "2",
+    fill: "#b8960c",
+    stroke: "#8a6f00",
+    strokeWidth: "1.5"
+  }), React.createElement("rect", {
+    x: "36",
+    y: "132",
+    width: "48",
+    height: "28",
+    fill: "#5c4a36",
+    stroke: "#8a6f00",
+    strokeWidth: "2"
+  }), React.createElement("rect", {
+    x: "40",
+    y: "136",
+    width: "40",
+    height: "20",
+    fill: "rgba(0,0,0,0.15)"
+  }), React.createElement("rect", {
+    x: "20",
+    y: "160",
+    width: "16",
+    height: "6",
+    fill: "#6d5843"
+  }), React.createElement("rect", {
+    x: "84",
+    y: "160",
+    width: "16",
+    height: "6",
+    fill: "#6d5843"
+  }), React.createElement("rect", {
+    x: "22",
+    y: "50",
+    width: "76",
+    height: "2",
+    fill: "#8a6f00",
+    opacity: "0.4"
+  }))), React.createElement("div", {
+    className: "gacha-info"
+  }, React.createElement("div", {
+    className: "gacha-cost"
+  }, "5 ✦ per play"), React.createElement("div", {
+    className: "gacha-balance"
+  }, "You have: " + balance + " ✦"), React.createElement("button", {
+    className: "btn " + (canPlay ? "btn-gold" : "btn-light"),
+    onClick: handlePlay,
+    disabled: !canPlay || playing
+  }, playing ? "..." : "INSERT ✦")), justGot && React.createElement("div", {
+    className: "gacha-result"
+  }, React.createElement("div", {
+    className: "result-star"
+  }, "✦"), React.createElement("div", {
+    className: "result-type"
+  }, "CAPSULE DISPENSED"), React.createElement("div", {
+    className: "result-content"
+  }, "Waiting for Lux to open it...")), pendingCount > 0 && !justGot && React.createElement("div", {
+    className: "gacha-pending"
+  }, pendingCount + " capsule" + (pendingCount > 1 ? "s" : "") + " waiting for Lux"), filledRewards && filledRewards.length > 0 && React.createElement("div", {
+    className: "past-rewards"
+  }, React.createElement("div", {
+    className: "section-label",
+    style: {
+      marginTop: 24
+    }
+  }, "PAST REWARDS"), filledRewards.map(r => React.createElement("div", {
+    key: r.id,
+    className: "reward-wrap" + (expanded[r.id] ? " open" : ""),
+    onClick: () => setExpanded(function (prev) {
+      var n = {};
+      for (var k in prev) n[k] = prev[k];
+      n[r.id] = !prev[r.id];
+      return n;
+    })
+  }, React.createElement("div", {
+    className: "reward-row"
+  }, React.createElement("span", {
+    className: "reward-star"
+  }, "✦"), React.createElement("span", {
+    className: "reward-type"
+  }, r.reward_type), React.createElement("span", {
+    className: "reward-date"
+  }, new Date(r.created_at).toLocaleDateString("en-CA"))), expanded[r.id] && React.createElement("div", {
+    className: "reward-content"
+  }, r.reward_content)))));
+}
+
+/* ---- Wish List Page ---- */
+function WishPage({
+  wishes,
+  balance,
+  onRefresh,
+  loading
+}) {
+  const [adding, setAdding] = useState(false);
+  const [title, setTitle] = useState("");
+  const [target, setTarget] = useState("");
+  const [price, setPrice] = useState("");
+  const handleAdd = async () => {
+    if (!title.trim() || !target || parseInt(target) < 1) return;
+    try {
+      await api("wishes", {
+        method: "POST",
+        body: {
+          title: title.trim(),
+          coins_target: parseInt(target),
+          price: parseFloat(price) || 0
+        }
+      });
+      setTitle("");
+      setTarget("");
+      setPrice("");
+      setAdding(false);
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+  const handleFund = async (wish, amount) => {
+    if (balance < amount) return;
+    try {
+      await api("wishes/" + wish.id, {
+        method: "PATCH",
+        body: {
+          add_coins: amount
+        }
+      });
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+  const activeWishes = (wishes || []).filter(w => w.status !== "bought");
+  const totalPrice = activeWishes.reduce((s, w) => s + Number(w.price || 0), 0);
+  return React.createElement("div", {
+    className: "page wish-page"
+  }, React.createElement("div", {
+    className: "wish-header-row"
+  }, React.createElement("div", {
+    className: "section-label"
+  }, "WISH LIST"), React.createElement("button", {
+    className: "btn btn-light add-btn",
+    onClick: () => setAdding(!adding)
+  }, adding ? "CANCEL" : "+ ADD")), totalPrice > 0 && React.createElement("div", {
+    className: "wish-total"
+  }, React.createElement("span", {
+    className: "wish-total-label"
+  }, "TOTAL"), React.createElement("span", {
+    className: "wish-total-val"
+  }, "¥" + totalPrice.toLocaleString())), adding && React.createElement("div", {
+    className: "wish-form"
+  }, React.createElement("input", {
+    type: "text",
+    placeholder: "What do you wish for...",
+    value: title,
+    onChange: e => setTitle(e.target.value)
+  }), React.createElement("input", {
+    type: "number",
+    placeholder: "Price ¥",
+    value: price,
+    onChange: e => setPrice(e.target.value)
+  }), React.createElement("input", {
+    type: "number",
+    placeholder: "✦ target",
+    value: target,
+    onChange: e => setTarget(e.target.value)
+  }), React.createElement("button", {
+    className: "btn btn-gold",
+    onClick: handleAdd
+  }, "SAVE")), loading ? React.createElement("div", {
+    className: "loading"
+  }, "Loading...") : !wishes || wishes.length === 0 ? React.createElement("div", {
+    className: "empty"
+  }, "No wishes yet") : wishes.map(w => {
+    const pct = Math.min(100, Math.round(w.coins_saved / w.coins_target * 100));
+    return React.createElement("div", {
+      key: w.id,
+      className: "wish-item " + w.status
+    }, React.createElement("div", {
+      className: "wish-title-row"
+    }, React.createElement("span", {
+      className: "wish-title"
+    }, w.title), w.status === "reached" && React.createElement("span", {
+      className: "wish-badge"
+    }, "REACHED ✦")), Number(w.price) > 0 && React.createElement("div", {
+      className: "wish-price"
+    }, "¥" + Number(w.price).toLocaleString()), React.createElement("div", {
+      className: "wish-bar-bg"
+    }, React.createElement("div", {
+      className: "wish-bar-fill",
+      style: {
+        width: pct + "%"
+      }
+    })), React.createElement("div", {
+      className: "wish-meta"
+    }, React.createElement("span", null, w.coins_saved + " / " + w.coins_target + " ✦"), w.status === "saving" && balance > 0 && React.createElement("button", {
+      className: "fund-btn",
+      onClick: () => handleFund(w, 1)
+    }, "+1 ✦")), w.lux_comment && React.createElement("div", {
+      className: "wish-lux"
+    }, w.lux_comment));
+  }));
+}
+
+/* ---- App ---- */
+function App() {
+  const [connected, setConnected] = useState(!!getAPI());
+  const [tab, setTab] = useState("home");
+  const [balance, setBalance] = useState(0);
+  const [entries, setEntries] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [rewards, setRewards] = useState([]);
+  const [wishes, setWishes] = useState([]);
+  const [loadingE, setLoadingE] = useState(false);
+  const [loadingR, setLoadingR] = useState(false);
+  const [loadingW, setLoadingW] = useState(false);
+  const [loadingRv, setLoadingRv] = useState(false);
+
+  // Dashboard state (persists across tab switches)
+  const now = new Date();
+  const [dashStart, setDashStart] = useState(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10));
+  const [dashEnd, setDashEnd] = useState(now.toISOString().slice(0, 10));
+  const [heatMonth, setHeatMonth] = useState(now.getMonth());
+  const [heatYear, setHeatYear] = useState(now.getFullYear());
+  const loadAll = useCallback(async () => {
+    if (!getAPI()) return;
+    try {
+      const s = await api("settings");
+      setBalance(s.coins_balance || 0);
+    } catch (e) {}
+  }, []);
+  const loadEntries = useCallback(async () => {
+    setLoadingE(true);
+    try {
+      setEntries(await api("entries?limit=500"));
+    } catch (e) {}
+    setLoadingE(false);
+  }, []);
+  const loadReviews = useCallback(async () => {
+    setLoadingR(true);
+    try {
+      setReviews(await api("reviews"));
+    } catch (e) {}
+    setLoadingR(false);
+  }, []);
+  const loadRewards = useCallback(async () => {
+    setLoadingRv(true);
+    try {
+      setRewards(await api("rewards"));
+    } catch (e) {}
+    setLoadingRv(false);
+  }, []);
+  const loadWishes = useCallback(async () => {
+    setLoadingW(true);
+    try {
+      setWishes(await api("wishes"));
+    } catch (e) {}
+    setLoadingW(false);
+  }, []);
+  useEffect(() => {
+    if (connected) {
+      loadAll();
+      loadEntries();
+    }
+  }, [connected]);
+  useEffect(() => {
+    if (connected && tab === "home") {
+      loadEntries();
+      loadAll();
+    }
+    if (connected && tab === "entries") loadEntries();
+    if (connected && tab === "review") loadReviews();
+    if (connected && tab === "gacha") {
+      loadRewards();
+      loadAll();
+    }
+    if (connected && tab === "wishes") {
+      loadWishes();
+      loadAll();
+    }
+  }, [tab]);
+  if (!connected) {
+    return React.createElement(ConnectPage, {
+      onConnect: () => setConnected(true)
+    });
+  }
+  const tabs = [{
+    id: "home",
+    icon: "✦"
+  }, {
+    id: "log",
+    icon: "+"
+  }, {
+    id: "entries",
+    icon: "≡"
+  }, {
+    id: "review",
+    icon: "☆"
+  }, {
+    id: "gacha",
+    icon: "◎"
+  }, {
+    id: "wishes",
+    icon: "♡"
+  }];
+  let page = null;
+  switch (tab) {
+    case "home":
+      page = React.createElement(HomePage, {
+        balance,
+        entries,
+        onNav: setTab,
+        dashStart,
+        dashEnd,
+        setDashStart,
+        setDashEnd,
+        heatMonth,
+        heatYear,
+        setHeatMonth,
+        setHeatYear
+      });
+      break;
+    case "log":
+      page = React.createElement(LogPage, {
+        onSaved: () => {
+          loadEntries();
+          loadAll();
+        }
+      });
+      break;
+    case "entries":
+      page = React.createElement(EntriesPage, {
+        entries,
+        loading: loadingE,
+        onRefresh: () => {
+          loadEntries();
+          loadAll();
+        }
+      });
+      break;
+    case "review":
+      page = React.createElement(ReviewPage, {
+        reviews,
+        loading: loadingR
+      });
+      break;
+    case "gacha":
+      page = React.createElement(GachaPage, {
+        balance,
+        rewards,
+        loading: loadingRv,
+        onPlay: () => {
+          loadRewards();
+          loadAll();
+        }
+      });
+      break;
+    case "wishes":
+      page = React.createElement(WishPage, {
+        wishes,
+        balance,
+        loading: loadingW,
+        onRefresh: () => {
+          loadWishes();
+          loadAll();
+        }
+      });
+      break;
+  }
+  return React.createElement("div", {
+    className: "app"
+  }, React.createElement("div", {
+    className: "app-content"
+  }, page), React.createElement("nav", {
+    className: "tab-bar"
+  }, tabs.map(t => React.createElement("button", {
+    key: t.id,
+    className: "tab-item" + (tab === t.id ? " active" : ""),
+    onClick: () => setTab(t.id)
+  }, React.createElement("span", {
+    className: "tab-icon"
+  }, t.icon), React.createElement("span", {
+    className: "tab-label"
+  }, t.id.toUpperCase())))));
+}
+ReactDOM.render(React.createElement(App), document.getElementById("root"));
+
+</script>
+</body>
+</html>
