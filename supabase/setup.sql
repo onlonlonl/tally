@@ -12,7 +12,7 @@ CREATE TABLE tally_entries (
   created_at timestamptz DEFAULT now()
 );
 
--- Claude's weekly reviews
+-- Lux's weekly reviews
 CREATE TABLE tally_reviews (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   week_start date NOT NULL,
